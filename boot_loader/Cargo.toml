@@ -15,3 +15,4 @@ vmm-sys-util = ">=0.7.0"
 address_space = { path = "../address_space" }
 devices = { path = "../devices" }
 util = { path = "../util" }
+machine_manager = { path = "../machine_manager" }

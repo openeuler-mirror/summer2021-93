@@ -17,7 +17,8 @@ use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::sync::Arc;
 
-use address_space::{AddressSpace, GuestAddress};
+use address_space::{AddressSpace, GuestAddress, Region, create_host_mmaps};
+use machine_manager::config::MachineMemConfig;
 use util::byte_code::ByteCode;
 
 use super::bootparam::{BootParams, RealModeKernelHeader, UNDEFINED_ID};
@@ -115,7 +116,25 @@ fn load_kernel_image(
         )
     };
 
-    load_image(&mut kernel_image, vmlinux_start, &sys_mem).chain_err(|| "Failed to load image")?;
+    let file_len = kernel_image.seek(SeekFrom::End(0)).unwrap();
+    let ram_ranges = [(vmlinux_start, file_len)];
+    let mem_config = MachineMemConfig {
+        mem_size: file_len,
+        mem_path: Some(String::from(kernel_path.to_str().unwrap())),
+        dump_guest_core: false,
+        mem_share: false
+    };
+    let mem_mappings = create_host_mmaps(&ram_ranges, &mem_config)
+        .chain_err(|| "Failed to mmap guest ram.")?;
+    for mmap in mem_mappings.iter() {
+        let base = mmap.start_address().raw_value();
+        let size = mmap.size();
+        debug!("mmap start_address {:?}, size: {:?}", base, size);
+        sys_mem
+            .root()
+            .add_subregion(Region::init_ram_region(mmap.clone()), base)?;
+    }
+    // load_image(&mut kernel_image, vmlinux_start, &sys_mem).chain_err(|| "Failed to load image")?;
 
     boot_layout.boot_ip = kernel_start;
 
