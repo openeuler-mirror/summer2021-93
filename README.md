@@ -1,96 +1,47 @@
-# StratoVirt
-StratoVirt is an enterprise-level virtualization platform for cloud data centers
-in the computing industry. It implements a set of architecture that supports
-three scenarios: virtual machines, containers, and serverless computing.
+# Introduce
+This is a demo to reduce the `basic noise of booting memory`.
+It includes:
+- A demo of stratovirt which saves about 12% memory when booting.
+- A test script which can help watching the changes of memory when booting.
 
-StratoVirt has competitive advantages in light weight and low noise, software
-and hardware coordination, and Rust language-level security.
+The size of memory is the sum of PSS of the Stratovirt, including the consumption of Guest OS.
+It is only based on the architecture of `x86_64`.
 
-StratoVirt reserves interface and design for importing more features, even
-evaluates to standard virtualization.
+# Test process
+First, clone this reposity to the diretory where you like.
 
-## How to start
-
-### Preparation
-Before building StratoVirt, make sure that Rust language and Cargo have already
-been installed. If not, you can find installation guidance via following link:
-
-https://www.rust-lang.org/tools/install
-
-And it will get smaller memory overhead if you prepare musl toolchain for rust.
-
-### Build StratoVirt
-To build StratoVirt, clone the project and build it first:
-```sh
-$ git clone https://gitee.com/openeuler/stratovirt.git
-$ cd stratovirt
-$ cargo build --release
+Then, you can clone the master branch of stratovirt from the official repository as a comparison with mine.
+```bash
+git clone https://gitee.com/openeuler/stratovirt.git
 ```
-Now you can find StratoVirt binary in `target/release/stratovirt`.
+And then copy the `test_script` in my repository to the root directory of official `stratovirt`.
+The `test_script` including the scripts which should run both;
 
-### Run a VM with StratoVirt
-To run StratoVirt quickly, requires
-* A PE or bzImage (only x86_64) format Linux kernel
-* An EXT4 filesystem, raw format rootfs disk image
+```bash
+cp test_script the/root/of/official/stravorit
+# both repository should do the following for preparation.
+cd test_script
+chmod +x *.sh
+./preprocess.sh
+```
+This will download the same environment in both repositories.
 
-You can get kernel and rootfs image from the following link:
-
-https://repo.openeuler.org/openEuler-21.03/stratovirt_img/
-
-For standard_vm, firmware file of EDK2 which follows UEFI is required.
-
-```shell
-# If the socket of qmp exists, remove it first.
-
-# Start microvm
-$ ./target/release/stratovirt \
-    -machine microvm \
-    -kernel /path/to/kernel \
-    -append "console=ttyS0 root=/dev/vda reboot=k panic=1" \
-    -drive file=/path/to/rootfs,id=rootfs,readonly=off \
-    -device virtio-blk-device,drive=rootfs \
-    -qmp unix:/path/to/socket,server,nowait \
-    -serial stdio
-
-# Start standard_vm
-$ ./target/release/stratovirt \
-    -machine standard_vm \
-    -kernel /path/to/kernel \
-    -append "console=ttys0 root=/dev/vda reboot=k panic=1" \
-    -drive file=/path/to/firmware,if=pflash,unit=0,readonly=true \
-    -device pcie-root-port,port=0x0,addr=0x1.0x0,bus=pcie.0,id=pcie.1 \
-    -drive file=/path/to/rootfs,id=rootfs,readonly=off \
-    -device virtio-blk-pci,drive=rootfs,bus=pcie.1,addr=0x0.0x0 \
-    -qmp unix:/path/to/socket,server,nowait \
-    -serial stdio
+Open another terminal(named Terminal 1) to run `watch_mem.sh`, this will watch the memory changes of the only `stravorit` job. You can run it along the whole process of testing.
+```bash
+# Open another terminal and run it:
+# In test_script:
+./watch_mem.sh
 ```
 
-The detailed guidance of making rootfs, compiling kernel and building StratoVirt
-can be found in [StratoVirt QuickStart](./docs/quickstart.md).
+Then we open another terminal(named Terminal 2) to run `run_gnu.sh` or `run_musl.sh` in the official stratovirt repo and this repo seperately. Namely you should run four test cases seperately.
 
-StratoVirt supports much more features, the detailed guidance can be found in
-[Configuration Guidebook](docs/config_guidebook.md).
+# Result
+The Test results of mine are just the following:
+| repo    | gnn toochchain | musl toolchain |
+| ------- | -------------- | -------------- |
+| Demo    | 78229 Kib      | 78192 Kib      |
+| official| 88904 Kib      | 89796 Kib      |
+| saving  | 0.12007%       | 0.12923%       |
 
-## Design
+Note: The test is based on `x86_64`. No test in `aarch64`.
 
-To get more details about StratoVirt's core architecture design, refer to
-[StratoVirt design](./docs/design.md).
-
-## How to contribute
-We welcome new contributors! And we are happy to provide guidance and help for
-new contributors. StratoVirt follows Rust formatting conventions, which can be
-found at:
-
-https://github.com/rust-dev-tools/fmt-rfcs/tree/master/guide
-https://github.com/rust-lang/rust-clippy
-
-You can get more information about StratoVirt at:
-
-https://gitee.com/openeuler/stratovirt/wikis
-
-If you find a bug or have some ideas, please send an email to the
-[virt mailing list](https://mailweb.openeuler.org/postorius/lists/virt.openeuler.org/)
-or submit an [issue](https://gitee.com/openeuler/stratovirt/issues).
-
-## Licensing
-StratoVirt is licensed under the Mulan PSL v2.

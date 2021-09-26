@@ -116,7 +116,7 @@ fn load_kernel_image(
         )
     };
 
-    let file_len = kernel_image.seek(SeekFrom::End(0)).unwrap();
+    let file_len = kernel_image.metadata().unwrap().len();
     let ram_ranges = [(vmlinux_start, file_len)];
     let mem_config = MachineMemConfig {
         mem_size: file_len,
