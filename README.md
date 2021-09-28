@@ -37,11 +37,17 @@ Then we open another terminal(named Terminal 2) to run `run_gnu.sh` or `run_musl
 
 # Result
 The Test results of mine are just the following:
-| repo    | gnn toochchain | musl toolchain |
+| repo    | gnu toolchain | musl toolchain |
 | ------- | -------------- | -------------- |
 | Demo    | 78229 Kib      | 78192 Kib      |
 | official| 88904 Kib      | 89796 Kib      |
 | saving  | 0.12007%       | 0.12923%       |
+
+| repo     | gnu toolchain | musl toolchain |
+| -------- | ------------- | -------------- |
+| Demo     | 0.38739641(s) | 0.39230927(s)  |
+| Official | 0.37055695(s) | 0.37547353(s)  |
+| wasting  | 4.54436491%   | 4.48386868%    |
 
 Note: The test is based on `x86_64`. No test in `aarch64`.
 
